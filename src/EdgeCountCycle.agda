@@ -11,10 +11,10 @@ open import Relation.Nullary using (Dec; yes; no)
 open import Data.Fin.Base using (toℕ; fromℕ; inject₁; cast; pred)
 open import Data.Fin.Properties using (toℕ-inject₁; toℕ-fromℕ; _≟_; 0≢1+n)
 open import Data.Vec.Base using (Vec ; [] ; _∷_ ; tabulate; sum; allFin; count)
-open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; trans; cong; subst; _≢_)
+open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; trans; cong; cong₂; subst; _≢_)
 open import Data.Sum.Base using (_⊎_; inj₁; inj₂)
 open import Data.Product.Base using (_×_ ; proj₁ ; proj₂)
-open import Function.Base using (id)
+open import Function.Base
 open import Relation.Nullary.Negation.Core using (_¬-⊎_)
 open import Relation.Nullary.Decidable.Core using (_⊎-dec_)
 open import Function.Bundles using (_⤖_ ; _⇔_)
@@ -29,7 +29,7 @@ open EnumeratedFiniteGraph
 private
   variable
     a p q : Level
-    A : Set a
+    A B : Set a
 
 
 
@@ -51,7 +51,14 @@ module _ {P Q : Pred A p} (P? : Decidable P) (Q? : Decidable Q) where
     → f ≡ g
 -}
 
+-- composing with a function:
 
+compLemma : {P : Pred B p} (P? : Decidable P) (f : A → B) {n : ℕ} (g : Fin n → A)
+          → count P? (tabulate (f ∘ g)) ≡ count (P? ∘ f) (tabulate g)
+compLemma P? f {ℕ.zero} g = refl
+compLemma P? f {ℕ.suc n₁} g with does (P? (f (g Fin.zero)))
+... | true = cong ℕ.suc (compLemma P? f (g ∘ Fin.suc))
+... | false = compLemma P? f (g ∘ Fin.suc)
 
 -- count0 : ∀ (n : ℕ) (xs : Vec A n) → count (λ _ → ⊥) xs ≡ 0
 -- count0 = ?
@@ -61,9 +68,19 @@ module _ {P Q : Pred A p} (P? : Decidable P) (Q? : Decidable Q) where
 count1 : (n : ℕ) (i : Fin n) → count (_≟ i) (allFin n) ≡ 1
 count1 ℕ.zero ()
 count1 (ℕ.suc n₁) Fin.zero = cong ℕ.suc {!!}
-count1 (ℕ.suc n₁) (Fin.suc i) = {!count1 _ i!}
+count1 (ℕ.suc n₁) (Fin.suc i) =
+  trans (compLemma (_≟ Fin.suc i) Fin.suc id)
+        (trans (countExt (λ j →  Fin.suc j ≟ Fin.suc i) (_≟ i) {!!} (allFin n₁))
+               (count1 _ i))
+
+countMinus1 : (n : ℕ) (i : Fin (3 + n)) → count (λ j → minus1 j ≟ i) (allFin _) ≡ 1
+countMinus1 ℕ.zero Fin.zero = refl
+countMinus1 ℕ.zero (Fin.suc Fin.zero) = refl
+countMinus1 ℕ.zero (Fin.suc (Fin.suc Fin.zero)) = refl
 
 
+countMinus1 (ℕ.suc n₁) Fin.zero = cong ℕ.suc (trans (sym (compLemma (_≟ Fin.zero) (minus1 {n = ℕ.suc n₁}) λ i → Fin.suc (Fin.suc (Fin.suc i)))) {!!})
+countMinus1 (ℕ.suc n₁) (Fin.suc i) = {!!}
 
 -- countf1 : (n : ℕ) (i : Fin n) (f : Fin n ⤖ Fin n) → count (λ j → f j ≡ i) allFin ≡ 1
 -- countf1 = ?
@@ -75,6 +92,10 @@ count1 (ℕ.suc n₁) (Fin.suc i) = {!count1 _ i!}
 
 
 
-cycle|E| : ∀ (n : ℕ) → 2|E| (3+ n cycle) ≡ (3 + n) * 2
-cycle|E| ℕ.zero = refl
-cycle|E| (ℕ.suc n₁) = {!!}
+-- cycle|E| : ∀ (n : ℕ) → 2|E| (3+ n cycle) ≡ (3 + n) * 2
+-- cycle|E| ℕ.zero = refl
+-- cycle|E| (ℕ.suc n₁) = begin
+--                         (deg (3+ (ℕ.suc n₁) cycle) Fin.zero + sum (tabulate {n₁} (deg ∘ suc)))
+--                       ≡⟨ ? ⟩
+--                        (2 + (3 + n₁) * 2)
+--                       ∎
