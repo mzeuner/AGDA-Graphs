@@ -33,6 +33,7 @@ record EnumeratedFiniteGraph : Set₁ where
 
     isDecidableE   : Decidable FiniteE
     isIrreflexiveE : Irreflexive _≡_ FiniteE
+    isIrrelevantE  : Irrelevant FiniteE
     isSymmetricE   : Symmetric FiniteE
 
   FiniteEᵇ : Fin n → Fin n → Bool
@@ -46,6 +47,3 @@ record EnumeratedFiniteGraph : Set₁ where
 
   |E| : ℕ
   |E| = 2|E| / 2
-
-
-

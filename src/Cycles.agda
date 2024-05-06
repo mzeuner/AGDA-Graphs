@@ -1,20 +1,22 @@
 {-# OPTIONS --with-K #-}
 
+
 open import Data.Nat using (ℕ)
 open import Data.Nat.Base using (_/_; _*_; _+_; _∸_)
 open import Data.Nat.Properties using (1+n≢n; 1+n≢0)
 open import Data.Fin using (Fin)
 open import Agda.Builtin.Bool using (Bool)
-open import Data.Empty using (⊥)
+open import Data.Empty using (⊥ ; ⊥-elim)
 open import Relation.Nullary using (Dec; yes; no)
 open import Data.Fin.Base using (toℕ; fromℕ; inject₁; cast; pred)
 open import Data.Fin.Properties using (toℕ-inject₁; toℕ-fromℕ; _≟_; 0≢1+n)
 open import Data.Vec.Base using (Vec; tabulate; sum; allFin; count)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; trans; cong; subst; _≢_)
 open import Data.Sum.Base using (_⊎_; inj₁; inj₂)
-open import Data.Product.Base using (_×_)
+open import Data.Product.Base using (_×_ ; _,_)
 open import Function.Base using (id)
-open import Relation.Nullary.Negation.Core using (_¬-⊎_)
+open import Relation.Nullary using (Irrelevant)
+open import Relation.Nullary.Negation.Core using (¬_ ; _¬-⊎_)
 open import Relation.Nullary.Decidable.Core using (_⊎-dec_)
 open import Function.Bundles using (_⤖_)
 open import Relation.Unary using (Pred; Decidable)
@@ -100,6 +102,17 @@ cycleDec (ℕ.suc n₁) (Fin.suc i) (Fin.suc j) with (Fin.suc j ≟ inject₁ i)
 ... | i+1⊎j+1 = i+1⊎j+1
 
 
+open import Axiom.UniquenessOfIdentityProofs
+
+⊎-exclusive-irrelevant : {A B : Set} → Irrelevant A → Irrelevant B → ¬ (A × B) → Irrelevant (A ⊎ B)
+⊎-exclusive-irrelevant irrA irrB ¬A×B (inj₁ x) (inj₁ x₁) = cong inj₁ (irrA x x₁)
+⊎-exclusive-irrelevant irrA irrB ¬A×B (inj₁ x) (inj₂ y) = ⊥-elim (¬A×B (x , y))
+⊎-exclusive-irrelevant irrA irrB ¬A×B (inj₂ y) (inj₁ x) = ⊥-elim (¬A×B (x , y))
+⊎-exclusive-irrelevant irrA irrB ¬A×B (inj₂ y) (inj₂ y₁) = cong inj₂ (irrB y y₁)
+
+cycleIrrelevant : ∀ (n : ℕ) (i j : Fin (3 + n)) → Irrelevant (cycleE n i j)
+cycleIrrelevant n i j = ⊎-exclusive-irrelevant ≡-irrelevant ≡-irrelevant {!!}
+  where open Decidable⇒UIP (_≟_)
 
 3+_cycle : ℕ → EnumeratedFiniteGraph
 3+ n cycle = record
@@ -107,8 +120,6 @@ cycleDec (ℕ.suc n₁) (Fin.suc i) (Fin.suc j) with (Fin.suc j ≟ inject₁ i)
            ; FiniteE = cycleE n
            ; isDecidableE = cycleDec n
            ; isIrreflexiveE = cycleIrr n _ _
+           ; isIrrelevantE = {!!}
            ; isSymmetricE = cycleSym n _ _
            }
-
-
-
